@@ -1,0 +1,244 @@
+openapi: 3.0.3
+info:
+  title: API del Sistema de Inspección Visual de Vitelsa
+  version: 1.1.0
+  description: >-
+    Especificación de los servicios propuestos (Tabla 7 del informe). La inferencia se expone
+    solo en el servidor de borde (VLAN 30, red OT aislada); la trazabilidad y las alertas se
+    exponen en la nube a través del api-gateway, con autenticación por token Bearer (JWT).
+    Las direcciones de la nube son ilustrativas.
+servers:
+  - url: https://api.inspeccion-vitelsa.example
+    description: Nube, a través del api-gateway (dirección ilustrativa)
+security:
+  - bearerAuth: []
+tags:
+  - name: inferencia-service
+    description: Clasificación de imágenes en el borde de planta
+  - name: trazabilidad-service
+    description: Registro y consulta de inspecciones (nube)
+  - name: alertas-service
+    description: Umbrales de rechazo y notificaciones (nube)
+  - name: todos
+    description: Operaciones comunes a todos los servicios
+paths:
+  /v1/inferencias:
+    servers:
+      - url: http://10.20.30.10:8000
+        description: Servidor de borde en planta (VLAN 30 OT-BORDE), inferencia-service
+    post:
+      summary: Clasificar la imagen de una pieza
+      description: >-
+        Solo la consume captura-service, que corre en el mismo servidor de borde. No usa token
+        porque ninguna regla del cortafuegos permite que otra zona alcance el puerto 8000
+        (Tabla 16 del informe).
+      operationId: clasificarPieza
+      tags: [inferencia-service]
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [imagen, piezaId, loteId, etapa, camaraId]
+              properties:
+                imagen:
+                  type: string
+                  format: binary
+                  description: Imagen monocromática de 5 MP (PNG sin pérdida)
+                piezaId: { type: string, example: BGA-2026-11-000845 }
+                loteId: { type: string, example: L-2026-1117-03 }
+                etapa: { $ref: '#/components/schemas/Etapa' }
+                camaraId: { type: string, example: CAM-PL-01 }
+      responses:
+        '200':
+          description: Veredicto de la pieza
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoInferencia' }
+        '400': { $ref: '#/components/responses/SolicitudInvalida' }
+        '422': { $ref: '#/components/responses/ImagenNoProcesable' }
+        '503': { $ref: '#/components/responses/NoDisponible' }
+  /v1/salud:
+    servers:
+      - url: http://10.20.30.10:8000
+        description: Servidor de borde
+      - url: https://api.inspeccion-vitelsa.example
+        description: Nube
+    get:
+      summary: Verificar disponibilidad del servicio
+      operationId: verificarSalud
+      tags: [todos]
+      security: []
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  estado: { type: string, enum: [ok, degradado] }
+                  modeloVersion: { type: string, example: defectos-cnn-1.2.0 }
+        '503': { $ref: '#/components/responses/NoDisponible' }
+  /v1/lotes/{loteId}/inspecciones:
+    get:
+      summary: Listar las inspecciones de un lote
+      operationId: listarInspeccionesLote
+      tags: [trazabilidad-service]
+      parameters:
+        - { name: loteId, in: path, required: true, schema: { type: string } }
+        - { name: etapa, in: query, required: false, schema: { $ref: '#/components/schemas/Etapa' } }
+      responses:
+        '200':
+          description: Inspecciones del lote
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Inspeccion' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+  /v1/defectos/resumen:
+    get:
+      summary: Defectos por tipo y etapa en un periodo
+      operationId: resumirDefectos
+      tags: [trazabilidad-service]
+      parameters:
+        - { name: desde, in: query, required: true, schema: { type: string, format: date } }
+        - { name: hasta, in: query, required: true, schema: { type: string, format: date } }
+        - { name: etapa, in: query, required: false, schema: { $ref: '#/components/schemas/Etapa' } }
+      responses:
+        '200':
+          description: Conteo de inspecciones por clase
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: integer, minimum: 0 }
+                example: { sin_defecto: 2540, rayon: 31, astillamiento: 12, mancha: 9, inclusion: 4 }
+        '400': { $ref: '#/components/responses/SolicitudInvalida' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+  /v1/alertas/umbrales:
+    get:
+      summary: Consultar los umbrales de rechazo vigentes
+      operationId: listarUmbrales
+      tags: [alertas-service]
+      responses:
+        '200':
+          description: Umbrales por etapa
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Umbral' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+    post:
+      summary: Configurar el umbral de rechazo por etapa
+      operationId: configurarUmbral
+      tags: [alertas-service]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Umbral' }
+      responses:
+        '201':
+          description: Umbral registrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Umbral' }
+        '400': { $ref: '#/components/responses/SolicitudInvalida' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token emitido por el proveedor de identidad y validado en el api-gateway.
+  responses:
+    SolicitudInvalida:
+      description: Parámetros o cuerpo inválidos
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ImagenNoProcesable:
+      description: La imagen no tiene el formato o la resolución esperados
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NoAutorizado:
+      description: Token ausente, vencido o inválido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NoEncontrado:
+      description: El recurso solicitado no existe
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NoDisponible:
+      description: Servicio o modelo temporalmente no disponible
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Etapa:
+      type: string
+      enum: [post-limpieza, final]
+    ClaseDefecto:
+      type: string
+      enum: [sin_defecto, rayon, astillamiento, mancha, inclusion]
+    Resultado:
+      type: object
+      required: [clase, confianza, aprobada]
+      properties:
+        clase: { $ref: '#/components/schemas/ClaseDefecto' }
+        confianza: { type: number, minimum: 0, maximum: 1, example: 0.93 }
+        aprobada: { type: boolean, example: false }
+    ResultadoInferencia:
+      allOf:
+        - $ref: '#/components/schemas/Resultado'
+        - type: object
+          required: [modeloVersion]
+          properties:
+            modeloVersion: { type: string, example: defectos-cnn-1.2.0 }
+            latenciaMs: { type: integer, minimum: 0, example: 96 }
+    Inspeccion:
+      type: object
+      description: >-
+        Contrato de datos del informe; también se publica en el tópico MQTT
+        vitelsa/planta-bga/{etapa}/inspecciones.
+      required: [inspeccionId, piezaId, loteId, etapa, camaraId, fechaHora, resultado, modeloVersion]
+      properties:
+        inspeccionId: { type: string, format: uuid }
+        piezaId: { type: string }
+        loteId: { type: string }
+        etapa: { $ref: '#/components/schemas/Etapa' }
+        tipoVidrio:
+          type: string
+          enum: [templado, laminado]
+          description: Opcional; se obtiene del PLC por OPC UA cuando está disponible
+        espesorMm: { type: number, minimum: 0, example: 6 }
+        camaraId: { type: string, example: CAM-PL-01 }
+        fechaHora: { type: string, format: date-time }
+        resultado: { $ref: '#/components/schemas/Resultado' }
+        modeloVersion: { type: string, example: defectos-cnn-1.2.0 }
+        miniaturaUrl:
+          type: string
+          format: uri
+          description: Ubicación de la miniatura en almacen-objetos
+    Umbral:
+      type: object
+      required: [etapa, tasaRechazoMaxima]
+      properties:
+        etapa: { $ref: '#/components/schemas/Etapa' }
+        tasaRechazoMaxima: { type: number, minimum: 0, maximum: 1, example: 0.05 }
+    Error:
+      type: object
+      required: [codigo, mensaje]
+      properties:
+        codigo: { type: string, example: IMAGEN_RESOLUCION_INVALIDA }
+        mensaje: { type: string, example: La imagen debe tener 2448 × 2048 píxeles }

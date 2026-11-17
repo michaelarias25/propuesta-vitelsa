@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_Colgas" targetNamespace="http://ustavillavicencio.edu.co/bpmn/colgas" exporter="Equipo salida académica" exporterVersion="1.0">
+<bpmn:collaboration id="Collab_Colgas">
+<bpmn:participant id="Pool_Colgas" name="Colgas S.A. E.S.P. – Distribución de GLP en cilindros y a granel (modelo de alto nivel con fuentes secundarias)" processRef="Proc_Colgas" />
+<bpmn:textAnnotation id="Ann_conv"><bpmn:text>Convención: (S) fuente secundaria (SSPD, 2024; Ministerio de Minas y Energía, 2016); (I) inferido por el equipo. Colgas no fue visitada por el equipo: ninguna tarea se marca como observada.</bpmn:text></bpmn:textAnnotation>
+<bpmn:textAnnotation id="Ann_tel"><bpmn:text>Oportunidad (I): telemetría de nivel de tanques estacionarios y de la flota por MQTT, con el mismo patrón borde-nube de la Parte III.</bpmn:text></bpmn:textAnnotation>
+<bpmn:association id="Assoc_tel" sourceRef="t_granel" targetRef="Ann_tel" />
+</bpmn:collaboration>
+<bpmn:process id="Proc_Colgas" isExecutable="false"><bpmn:laneSet id="LaneSet_C">
+<bpmn:lane id="L_com" name="Comercial y regulatorio"><bpmn:flowNodeRef>start</bpmn:flowNodeRef><bpmn:flowNodeRef>t_prog</bpmn:flowNodeRef><bpmn:flowNodeRef>t_sui</bpmn:flowNodeRef><bpmn:flowNodeRef>end_ok</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="L_pla" name="Abastecimiento y planta de envasado"><bpmn:flowNodeRef>t_recibo</bpmn:flowNodeRef><bpmn:flowNodeRef>t_alm</bpmn:flowNodeRef><bpmn:flowNodeRef>gw_dest</bpmn:flowNodeRef><bpmn:flowNodeRef>t_envasar</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="L_cal" name="Calidad y seguridad de cilindros"><bpmn:flowNodeRef>t_revisar</bpmn:flowNodeRef><bpmn:flowNodeRef>gw_apto</bpmn:flowNodeRef><bpmn:flowNodeRef>t_retiro</bpmn:flowNodeRef><bpmn:flowNodeRef>end_retiro</bpmn:flowNodeRef><bpmn:flowNodeRef>t_verif</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="L_log" name="Logística y distribución"><bpmn:flowNodeRef>t_granel</bpmn:flowNodeRef><bpmn:flowNodeRef>t_cargar</bpmn:flowNodeRef><bpmn:flowNodeRef>t_distribuir</bpmn:flowNodeRef><bpmn:flowNodeRef>gw_join</bpmn:flowNodeRef></bpmn:lane>
+</bpmn:laneSet>
+<bpmn:startEvent id="start" name="Demanda de clientes"><bpmn:outgoing>g1</bpmn:outgoing></bpmn:startEvent>
+<bpmn:task id="t_prog" name="Programar abastecimiento y despachos (I)"><bpmn:incoming>g1</bpmn:incoming><bpmn:outgoing>g2</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_recibo" name="Recibir GLP a granel (S)"><bpmn:incoming>g2</bpmn:incoming><bpmn:outgoing>g3</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_alm" name="Almacenar en tanques de la planta (S)"><bpmn:incoming>g3</bpmn:incoming><bpmn:outgoing>g4</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="gw_dest" name="¿Cilindros o granel?"><bpmn:incoming>g4</bpmn:incoming><bpmn:outgoing>g5</bpmn:outgoing><bpmn:outgoing>g6</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:task id="t_revisar" name="Recibir y revisar cilindros marcados (S)"><bpmn:incoming>g5</bpmn:incoming><bpmn:outgoing>g7</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="gw_apto" name="¿Cilindro apto?"><bpmn:incoming>g7</bpmn:incoming><bpmn:outgoing>g8</bpmn:outgoing><bpmn:outgoing>g9</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:task id="t_retiro" name="Retirar a mantenimiento o destrucción (S)"><bpmn:incoming>g9</bpmn:incoming><bpmn:outgoing>g10</bpmn:outgoing></bpmn:task>
+<bpmn:endEvent id="end_retiro" name="Cilindro fuera de servicio"><bpmn:incoming>g10</bpmn:incoming></bpmn:endEvent>
+<bpmn:task id="t_envasar" name="Envasar por trasiego con báscula (S)"><bpmn:incoming>g8</bpmn:incoming><bpmn:outgoing>g11</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_verif" name="Verificar peso y hermeticidad (I)"><bpmn:incoming>g11</bpmn:incoming><bpmn:outgoing>g12</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_granel" name="Cargar carrotanque y entregar a tanque estacionario (S)"><bpmn:incoming>g6</bpmn:incoming><bpmn:outgoing>g15</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_cargar" name="Cargar vehículos de reparto (I)"><bpmn:incoming>g12</bpmn:incoming><bpmn:outgoing>g13</bpmn:outgoing></bpmn:task>
+<bpmn:task id="t_distribuir" name="Distribuir a expendios, depósitos y usuarios (S)"><bpmn:incoming>g13</bpmn:incoming><bpmn:outgoing>g14</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="gw_join"><bpmn:incoming>g14</bpmn:incoming><bpmn:incoming>g15</bpmn:incoming><bpmn:outgoing>g16</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:task id="t_sui" name="Reportar información regulatoria al SUI (S)"><bpmn:incoming>g16</bpmn:incoming><bpmn:outgoing>g17</bpmn:outgoing></bpmn:task>
+<bpmn:endEvent id="end_ok" name="Producto entregado y reportado"><bpmn:incoming>g17</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="g1" sourceRef="start" targetRef="t_prog" />
+<bpmn:sequenceFlow id="g2" sourceRef="t_prog" targetRef="t_recibo" />
+<bpmn:sequenceFlow id="g3" sourceRef="t_recibo" targetRef="t_alm" />
+<bpmn:sequenceFlow id="g4" sourceRef="t_alm" targetRef="gw_dest" />
+<bpmn:sequenceFlow id="g5" name="Cilindros" sourceRef="gw_dest" targetRef="t_revisar" />
+<bpmn:sequenceFlow id="g6" name="Granel" sourceRef="gw_dest" targetRef="t_granel" />
+<bpmn:sequenceFlow id="g7" sourceRef="t_revisar" targetRef="gw_apto" />
+<bpmn:sequenceFlow id="g8" name="Sí" sourceRef="gw_apto" targetRef="t_envasar" />
+<bpmn:sequenceFlow id="g9" name="No" sourceRef="gw_apto" targetRef="t_retiro" />
+<bpmn:sequenceFlow id="g10" sourceRef="t_retiro" targetRef="end_retiro" />
+<bpmn:sequenceFlow id="g11" sourceRef="t_envasar" targetRef="t_verif" />
+<bpmn:sequenceFlow id="g12" sourceRef="t_verif" targetRef="t_cargar" />
+<bpmn:sequenceFlow id="g13" sourceRef="t_cargar" targetRef="t_distribuir" />
+<bpmn:sequenceFlow id="g14" sourceRef="t_distribuir" targetRef="gw_join" />
+<bpmn:sequenceFlow id="g15" sourceRef="t_granel" targetRef="gw_join" />
+<bpmn:sequenceFlow id="g16" sourceRef="gw_join" targetRef="t_sui" />
+<bpmn:sequenceFlow id="g17" sourceRef="t_sui" targetRef="end_ok" />
+</bpmn:process>
+<bpmndi:BPMNDiagram id="Diagram_C"><bpmndi:BPMNPlane id="Plane_C" bpmnElement="Collab_Colgas">
+<bpmndi:BPMNShape id="Pool_Colgas_di" bpmnElement="Pool_Colgas" isHorizontal="true"><dc:Bounds x="100" y="80" width="2000" height="770" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="L_com_di" bpmnElement="L_com" isHorizontal="true"><dc:Bounds x="130" y="80" width="1970" height="190" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="L_pla_di" bpmnElement="L_pla" isHorizontal="true"><dc:Bounds x="130" y="270" width="1970" height="190" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="L_cal_di" bpmnElement="L_cal" isHorizontal="true"><dc:Bounds x="130" y="460" width="1970" height="190" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="L_log_di" bpmnElement="L_log" isHorizontal="true"><dc:Bounds x="130" y="650" width="1970" height="200" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="180" y="157" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="153" y="197" width="90" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_prog_di" bpmnElement="t_prog"><dc:Bounds x="260" y="135" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_recibo_di" bpmnElement="t_recibo"><dc:Bounds x="420" y="325" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_alm_di" bpmnElement="t_alm"><dc:Bounds x="570" y="325" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="gw_dest_di" bpmnElement="gw_dest" isMarkerVisible="true"><dc:Bounds x="725" y="340" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="705" y="308" width="90" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_revisar_di" bpmnElement="t_revisar"><dc:Bounds x="850" y="515" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="gw_apto_di" bpmnElement="gw_apto" isMarkerVisible="true"><dc:Bounds x="1010" y="530" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="990" y="498" width="90" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_retiro_di" bpmnElement="t_retiro"><dc:Bounds x="1110" y="515" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="end_retiro_di" bpmnElement="end_retiro"><dc:Bounds x="1270" y="537" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1243" y="577" width="90" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_envasar_di" bpmnElement="t_envasar"><dc:Bounds x="1100" y="325" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_verif_di" bpmnElement="t_verif"><dc:Bounds x="1360" y="515" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_granel_di" bpmnElement="t_granel"><dc:Bounds x="850" y="705" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_cargar_di" bpmnElement="t_cargar"><dc:Bounds x="1500" y="705" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_distribuir_di" bpmnElement="t_distribuir"><dc:Bounds x="1650" y="705" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="gw_join_di" bpmnElement="gw_join" isMarkerVisible="true"><dc:Bounds x="1820" y="720" width="50" height="50" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t_sui_di" bpmnElement="t_sui"><dc:Bounds x="1785" y="135" width="120" height="80" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="1990" y="157" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1963" y="197" width="90" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Ann_conv_di" bpmnElement="Ann_conv"><dc:Bounds x="560" y="100" width="640" height="56" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Ann_tel_di" bpmnElement="Ann_tel"><dc:Bounds x="1060" y="690" width="320" height="56" /></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="Assoc_tel_di" bpmnElement="Assoc_tel"><di:waypoint x="970" y="725" /><di:waypoint x="1060" y="718" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g1_di" bpmnElement="g1"><di:waypoint x="216" y="175" /><di:waypoint x="260" y="175" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g2_di" bpmnElement="g2"><di:waypoint x="380" y="175" /><di:waypoint x="480" y="175" /><di:waypoint x="480" y="325" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g3_di" bpmnElement="g3"><di:waypoint x="540" y="365" /><di:waypoint x="570" y="365" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g4_di" bpmnElement="g4"><di:waypoint x="690" y="365" /><di:waypoint x="725" y="365" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g5_di" bpmnElement="g5"><di:waypoint x="775" y="365" /><di:waypoint x="910" y="365" /><di:waypoint x="910" y="515" /><bpmndi:BPMNLabel><dc:Bounds x="781" y="369" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g6_di" bpmnElement="g6"><di:waypoint x="750" y="390" /><di:waypoint x="750" y="745" /><di:waypoint x="850" y="745" /><bpmndi:BPMNLabel><dc:Bounds x="756" y="394" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g7_di" bpmnElement="g7"><di:waypoint x="970" y="555" /><di:waypoint x="1010" y="555" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g8_di" bpmnElement="g8"><di:waypoint x="1035" y="530" /><di:waypoint x="1035" y="365" /><di:waypoint x="1100" y="365" /><bpmndi:BPMNLabel><dc:Bounds x="1042" y="444" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g9_di" bpmnElement="g9"><di:waypoint x="1060" y="555" /><di:waypoint x="1110" y="555" /><bpmndi:BPMNLabel><dc:Bounds x="1066" y="559" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g10_di" bpmnElement="g10"><di:waypoint x="1230" y="555" /><di:waypoint x="1270" y="555" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g11_di" bpmnElement="g11"><di:waypoint x="1220" y="365" /><di:waypoint x="1420" y="365" /><di:waypoint x="1420" y="515" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g12_di" bpmnElement="g12"><di:waypoint x="1420" y="595" /><di:waypoint x="1420" y="745" /><di:waypoint x="1500" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g13_di" bpmnElement="g13"><di:waypoint x="1620" y="745" /><di:waypoint x="1650" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g14_di" bpmnElement="g14"><di:waypoint x="1770" y="745" /><di:waypoint x="1820" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g15_di" bpmnElement="g15"><di:waypoint x="970" y="745" /><di:waypoint x="1000" y="745" /><di:waypoint x="1000" y="815" /><di:waypoint x="1845" y="815" /><di:waypoint x="1845" y="770" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g16_di" bpmnElement="g16"><di:waypoint x="1845" y="720" /><di:waypoint x="1845" y="215" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="g17_di" bpmnElement="g17"><di:waypoint x="1905" y="175" /><di:waypoint x="1990" y="175" /></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>

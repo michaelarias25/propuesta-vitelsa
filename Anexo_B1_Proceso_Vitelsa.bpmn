@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_Vitelsa" targetNamespace="http://ustavillavicencio.edu.co/bpmn/vitelsa" exporter="Equipo salida académica" exporterVersion="1.0">
+  <bpmn:collaboration id="Collab_Vitelsa">
+    <bpmn:participant id="Pool_Vitelsa" name="Vitelsa – Planta Bucaramanga: transformación e inspección de vidrio" processRef="Proc_Vitelsa" />
+    <bpmn:textAnnotation id="Ann_conv"><bpmn:text>Convención: (O) observado en la visita del 15/09/2026; (S) fuente secundaria; (I) inferido por el equipo. Las tareas "(propuesta)" corresponden al sistema de inspección visual del informe (Parte III).</bpmn:text></bpmn:textAnnotation>
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_Vitelsa" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="L_com" name="Comercial">
+        <bpmn:flowNodeRef>start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_pedido</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_prep" name="Preparación y corte">
+        <bpmn:flowNodeRef>t_recibir</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_cortar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_limpiar</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_cal" name="Calidad">
+        <bpmn:flowNodeRef>t_insp1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_ok1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_tipo</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_join</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_final</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>gw_ok2</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_rechazo</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>end_rech</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_tem" name="Templado">
+        <bpmn:flowNodeRef>t_calentar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_enfriar</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_lam" name="Laminado">
+        <bpmn:flowNodeRef>t_ensamblar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_prensar</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_des" name="Despacho">
+        <bpmn:flowNodeRef>t_embalar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>t_despachar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>end_ok</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="start" name="Pedido recibido">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="t_pedido" name="Registrar pedido (I)">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_recibir" name="Recibir vidrio crudo (O)">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_cortar" name="Preparar y cortar a medida (O)">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_limpiar" name="Limpiar pieza (O)">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="t_insp1" name="Inspección automática 1 post-limpieza (propuesta)">
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="gw_ok1" name="¿Pieza sin defecto?">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="gw_tipo" name="¿Tipo de vidrio?">
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="t_calentar" name="Calentar en horno industrial (O)">
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_enfriar" name="Enfriar con aire (S)">
+      <bpmn:incoming>f11</bpmn:incoming>
+      <bpmn:outgoing>f13</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_ensamblar" name="Ensamblar láminas con película intermedia (I)">
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:outgoing>f12</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_prensar" name="Prensar y curar en autoclave (I)">
+      <bpmn:incoming>f12</bpmn:incoming>
+      <bpmn:outgoing>f14</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="gw_join">
+      <bpmn:incoming>f13</bpmn:incoming>
+      <bpmn:incoming>f14</bpmn:incoming>
+      <bpmn:outgoing>f15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="t_final" name="Inspección final (O) y automática 2 (propuesta)">
+      <bpmn:incoming>f15</bpmn:incoming>
+      <bpmn:outgoing>f16</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="gw_ok2" name="¿Cumple calidad?">
+      <bpmn:incoming>f16</bpmn:incoming>
+      <bpmn:outgoing>f17</bpmn:outgoing>
+      <bpmn:outgoing>f18</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="t_rechazo" name="Registrar rechazo y causa (I)">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:incoming>f18</bpmn:incoming>
+      <bpmn:outgoing>f19</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="end_rech" name="Pieza rechazada">
+      <bpmn:incoming>f19</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="t_embalar" name="Embalar (I)">
+      <bpmn:incoming>f17</bpmn:incoming>
+      <bpmn:outgoing>f20</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="t_despachar" name="Despachar a cliente u obra (I)">
+      <bpmn:incoming>f20</bpmn:incoming>
+      <bpmn:outgoing>f21</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="end_ok" name="Pedido despachado">
+      <bpmn:incoming>f21</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="start" targetRef="t_pedido" />
+    <bpmn:sequenceFlow id="f2" sourceRef="t_pedido" targetRef="t_recibir" />
+    <bpmn:sequenceFlow id="f3" sourceRef="t_recibir" targetRef="t_cortar" />
+    <bpmn:sequenceFlow id="f4" sourceRef="t_cortar" targetRef="t_limpiar" />
+    <bpmn:sequenceFlow id="f5" sourceRef="t_limpiar" targetRef="t_insp1" />
+    <bpmn:sequenceFlow id="f6" sourceRef="t_insp1" targetRef="gw_ok1" />
+    <bpmn:sequenceFlow id="f7" name="Sí" sourceRef="gw_ok1" targetRef="gw_tipo" />
+    <bpmn:sequenceFlow id="f8" name="No" sourceRef="gw_ok1" targetRef="t_rechazo" />
+    <bpmn:sequenceFlow id="f9" name="Templado" sourceRef="gw_tipo" targetRef="t_calentar" />
+    <bpmn:sequenceFlow id="f10" name="Laminado" sourceRef="gw_tipo" targetRef="t_ensamblar" />
+    <bpmn:sequenceFlow id="f11" sourceRef="t_calentar" targetRef="t_enfriar" />
+    <bpmn:sequenceFlow id="f12" sourceRef="t_ensamblar" targetRef="t_prensar" />
+    <bpmn:sequenceFlow id="f13" sourceRef="t_enfriar" targetRef="gw_join" />
+    <bpmn:sequenceFlow id="f14" sourceRef="t_prensar" targetRef="gw_join" />
+    <bpmn:sequenceFlow id="f15" sourceRef="gw_join" targetRef="t_final" />
+    <bpmn:sequenceFlow id="f16" sourceRef="t_final" targetRef="gw_ok2" />
+    <bpmn:sequenceFlow id="f17" name="Sí" sourceRef="gw_ok2" targetRef="t_embalar" />
+    <bpmn:sequenceFlow id="f18" name="No" sourceRef="gw_ok2" targetRef="t_rechazo" />
+    <bpmn:sequenceFlow id="f19" sourceRef="t_rechazo" targetRef="end_rech" />
+    <bpmn:sequenceFlow id="f20" sourceRef="t_embalar" targetRef="t_despachar" />
+    <bpmn:sequenceFlow id="f21" sourceRef="t_despachar" targetRef="end_ok" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="Collab_Vitelsa">
+      <bpmndi:BPMNShape id="Pool_Vitelsa_di" bpmnElement="Pool_Vitelsa" isHorizontal="true"><dc:Bounds x="100" y="80" width="2280" height="1000" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_com_di" bpmnElement="L_com" isHorizontal="true"><dc:Bounds x="130" y="80" width="2250" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_prep_di" bpmnElement="L_prep" isHorizontal="true"><dc:Bounds x="130" y="230" width="2250" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_cal_di" bpmnElement="L_cal" isHorizontal="true"><dc:Bounds x="130" y="380" width="2250" height="250" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_tem_di" bpmnElement="L_tem" isHorizontal="true"><dc:Bounds x="130" y="630" width="2250" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_lam_di" bpmnElement="L_lam" isHorizontal="true"><dc:Bounds x="130" y="780" width="2250" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_des_di" bpmnElement="L_des" isHorizontal="true"><dc:Bounds x="130" y="930" width="2250" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start"><dc:Bounds x="200" y="137" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="178" y="177" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_pedido_di" bpmnElement="t_pedido"><dc:Bounds x="280" y="115" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_recibir_di" bpmnElement="t_recibir"><dc:Bounds x="440" y="265" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_cortar_di" bpmnElement="t_cortar"><dc:Bounds x="590" y="265" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_limpiar_di" bpmnElement="t_limpiar"><dc:Bounds x="740" y="265" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_insp1_di" bpmnElement="t_insp1"><dc:Bounds x="890" y="400" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gw_ok1_di" bpmnElement="gw_ok1" isMarkerVisible="true"><dc:Bounds x="1045" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1030" y="385" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gw_tipo_di" bpmnElement="gw_tipo" isMarkerVisible="true"><dc:Bounds x="1145" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1130" y="385" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_calentar_di" bpmnElement="t_calentar"><dc:Bounds x="1250" y="665" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_enfriar_di" bpmnElement="t_enfriar"><dc:Bounds x="1400" y="665" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_ensamblar_di" bpmnElement="t_ensamblar"><dc:Bounds x="1250" y="815" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_prensar_di" bpmnElement="t_prensar"><dc:Bounds x="1400" y="815" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gw_join_di" bpmnElement="gw_join" isMarkerVisible="true"><dc:Bounds x="1570" y="415" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_final_di" bpmnElement="t_final"><dc:Bounds x="1670" y="400" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gw_ok2_di" bpmnElement="gw_ok2" isMarkerVisible="true"><dc:Bounds x="1830" y="415" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1815" y="385" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_rechazo_di" bpmnElement="t_rechazo"><dc:Bounds x="1670" y="530" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_rech_di" bpmnElement="end_rech"><dc:Bounds x="1830" y="552" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1808" y="592" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_embalar_di" bpmnElement="t_embalar"><dc:Bounds x="1930" y="965" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="t_despachar_di" bpmnElement="t_despachar"><dc:Bounds x="2080" y="965" width="120" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="2240" y="987" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2218" y="1027" width="80" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ann_conv_di" bpmnElement="Ann_conv"><dc:Bounds x="620" y="95" width="560" height="60" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1"><di:waypoint x="236" y="155" /><di:waypoint x="280" y="155" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2"><di:waypoint x="400" y="155" /><di:waypoint x="500" y="155" /><di:waypoint x="500" y="265" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3"><di:waypoint x="560" y="305" /><di:waypoint x="590" y="305" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4"><di:waypoint x="710" y="305" /><di:waypoint x="740" y="305" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5"><di:waypoint x="860" y="305" /><di:waypoint x="950" y="305" /><di:waypoint x="950" y="400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6"><di:waypoint x="1010" y="440" /><di:waypoint x="1045" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7"><di:waypoint x="1095" y="440" /><di:waypoint x="1145" y="440" /><bpmndi:BPMNLabel><dc:Bounds x="1101" y="444" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8"><di:waypoint x="1070" y="465" /><di:waypoint x="1070" y="570" /><di:waypoint x="1670" y="570" /><bpmndi:BPMNLabel><dc:Bounds x="1076" y="469" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9"><di:waypoint x="1195" y="440" /><di:waypoint x="1225" y="440" /><di:waypoint x="1225" y="705" /><di:waypoint x="1250" y="705" /><bpmndi:BPMNLabel><dc:Bounds x="1201" y="444" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10"><di:waypoint x="1170" y="465" /><di:waypoint x="1170" y="855" /><di:waypoint x="1250" y="855" /><bpmndi:BPMNLabel><dc:Bounds x="1176" y="469" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11"><di:waypoint x="1370" y="705" /><di:waypoint x="1400" y="705" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f12_di" bpmnElement="f12"><di:waypoint x="1370" y="855" /><di:waypoint x="1400" y="855" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f13_di" bpmnElement="f13"><di:waypoint x="1520" y="705" /><di:waypoint x="1545" y="705" /><di:waypoint x="1545" y="440" /><di:waypoint x="1570" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f14_di" bpmnElement="f14"><di:waypoint x="1520" y="855" /><di:waypoint x="1595" y="855" /><di:waypoint x="1595" y="465" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f15_di" bpmnElement="f15"><di:waypoint x="1620" y="440" /><di:waypoint x="1670" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f16_di" bpmnElement="f16"><di:waypoint x="1790" y="440" /><di:waypoint x="1830" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f17_di" bpmnElement="f17"><di:waypoint x="1880" y="440" /><di:waypoint x="1990" y="440" /><di:waypoint x="1990" y="965" /><bpmndi:BPMNLabel><dc:Bounds x="1886" y="444" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f18_di" bpmnElement="f18"><di:waypoint x="1855" y="465" /><di:waypoint x="1855" y="500" /><di:waypoint x="1730" y="500" /><di:waypoint x="1730" y="530" /><bpmndi:BPMNLabel><dc:Bounds x="1861" y="469" width="60" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f19_di" bpmnElement="f19"><di:waypoint x="1790" y="570" /><di:waypoint x="1830" y="570" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f20_di" bpmnElement="f20"><di:waypoint x="2050" y="1005" /><di:waypoint x="2080" y="1005" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f21_di" bpmnElement="f21"><di:waypoint x="2200" y="1005" /><di:waypoint x="2240" y="1005" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

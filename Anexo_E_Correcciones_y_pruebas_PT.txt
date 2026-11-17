@@ -1,0 +1,128 @@
+! =============================================================================
+! ANEXO E - Correcciones y protocolo de pruebas en Cisco Packet Tracer 9.0.1
+! Archivo de simulación: Anexo_E_Red_Vitelsa_Bucaramanga.pkt
+!
+! Por qué hacen falta estas correcciones:
+!  1. Ningún equipo tiene llaves RSA, así que "transport input ssh" no funciona:
+!     la prueba de gestión por SSH fallaría.
+!  2. El archivo no tiene startup-config. Hay que guardarlo con "write memory"
+!     en cada equipo y luego guardar el .pkt DESDE Packet Tracer.
+!  3. La configuración almacenada muestra "enable secret" y "username ... secret"
+!     en texto plano. IOS siempre guarda esas claves cifradas, lo que indica que
+!     el archivo no se abrió ni se guardó desde Packet Tracer. Al volver a
+!     ingresarlas, quedan cifradas.
+!  4. Se agrega la regla de despliegue de modelos: servidor de salto (DMZ) ->
+!     servidor de borde por SSH (Tabla 16 y Figura 4 del informe).
+!
+! Cómo usarlo: abra cada equipo > pestaña CLI y pegue el bloque correspondiente.
+! Las líneas que empiezan por "!" son comentarios y IOS las ignora.
+! =============================================================================
+
+! ---------------------------------------------------------------- R-FW-BGA ---
+enable
+configure terminal
+! Volver a ingresar las claves para que IOS las guarde cifradas
+enable secret VitelsaLab26!
+username admin privilege 15 secret AdminVitelsa26!
+! Llaves RSA para SSH (si pregunta el tamaño del módulo, escriba 1024)
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+!
+! DMZ-IN: se agrega la línea de despliegue de modelos hacia el borde
+no ip access-list extended DMZ-IN
+ip access-list extended DMZ-IN
+ permit tcp host 10.20.40.2 eq 8883 host 10.20.30.10 established
+ permit tcp host 10.20.40.2 host 198.51.100.10 eq 8883
+ permit tcp host 10.20.40.3 10.20.60.0 0.0.0.15 eq 22
+ remark Despliegue controlado de modelos hacia el servidor de borde
+ permit tcp host 10.20.40.3 host 10.20.30.10 eq 22
+ permit icmp host 10.20.40.2 host 10.20.30.10 echo-reply
+ permit icmp host 10.20.40.2 host 198.51.100.10 echo
+ permit icmp 10.20.40.0 0.0.0.7 host 10.20.40.1 echo
+ deny ip any any
+exit
+!
+! BORDE-IN: se agrega el retorno de la sesión SSH de mantenimiento
+no ip access-list extended BORDE-IN
+ip access-list extended BORDE-IN
+ permit udp host 10.20.30.10 eq 3956 10.20.10.0 0.0.0.31
+ permit udp host 10.20.30.10 10.20.10.0 0.0.0.31 eq 3956
+ permit tcp host 10.20.30.10 host 10.20.20.10 eq 4840
+ permit tcp host 10.20.30.10 host 10.20.40.2 eq 8883
+ permit tcp host 10.20.30.10 eq 22 host 10.20.40.3 established
+ remark Excepcion diagnostica: borde hacia rele DMZ
+ permit icmp host 10.20.30.10 host 10.20.40.2 echo
+ permit icmp 10.20.30.0 0.0.0.15 host 10.20.30.1 echo
+ deny ip any any
+exit
+!
+! Reaplicar las ACL a sus subinterfaces (por seguridad tras recrearlas)
+interface GigabitEthernet0/0.30
+ ip access-group BORDE-IN in
+interface GigabitEthernet0/0.40
+ ip access-group DMZ-IN in
+end
+write memory
+
+! ------------------------------------------------- SW-CORE, SW-CAM-PL y SW-CAM-FINAL ---
+! (repetir el mismo bloque en los tres conmutadores)
+enable
+configure terminal
+enable secret VitelsaLab26!
+username admin privilege 15 secret AdminVitelsa26!
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+end
+write memory
+
+! ----------------------------------------------------------------- R-ISP ---
+enable
+write memory
+
+! =============================================================================
+! PROTOCOLO DE PRUEBAS (Tabla E2 del informe). Tome una captura de pantalla de
+! cada resultado e insértela en el Anexo E con el número de figura indicado.
+! En PC y servidores: pestaña Desktop > Command Prompt.
+! =============================================================================
+! Figura E1  Vista lógica completa del archivo .pkt (pestaña Logical).
+!
+! P1  Direccionamiento por VLAN
+!     R-FW-BGA:  show ip interface brief      -> subinterfaces .10 a .60 "up/up"
+!     CAM-PL-01, PLC-HORNO, EDGE-INFERENCIA, RELE-MQTT-DMZ, PC-CORPORATIVA,
+!     PC-GESTION:  ipconfig                    -> IP y puerta de enlace de la Tabla 13
+!     Captura: Figura E2
+!
+! P2  Borde -> DMZ (permitido)
+!     EDGE-INFERENCIA:  ping 10.20.40.2        -> respuestas (Reply from ...)
+! P3  DMZ -> nube (permitido)
+!     RELE-MQTT-DMZ:    ping 198.51.100.10     -> respuestas
+!     Captura de P2 y P3: Figura E3
+!
+! P4  Corporativa -> OT (bloqueado)
+!     PC-CORPORATIVA:   ping 10.20.10.11  y  ping 10.20.30.10
+!                       -> "Destination host unreachable" o tiempo agotado
+! P5  Corporativa -> panel en la nube (permitido)
+!     PC-CORPORATIVA:   ping 198.51.100.10 -> respuestas
+!                       Web Browser: https://198.51.100.10 -> carga la página
+!     Captura de P4 y P5: Figura E4
+!
+! P6  Internet -> planta (bloqueado)
+!     PC-INTERNET:      ping 10.20.40.2  y  ping 10.20.30.10 -> sin respuesta
+!     Captura: Figura E5
+!
+! P7  Gestión por SSH (permitido solo desde GESTION)
+!     PC-GESTION:       ssh -l admin 10.20.60.1  -> pide contraseña e ingresa
+!     PC-CORPORATIVA:   ssh -l admin 10.20.50.1  -> conexión rechazada
+!     Captura: Figura E6
+!
+! P8  Evidencia de las reglas
+!     R-FW-BGA:         show access-lists -> contadores "(n match(es))" en las
+!                       líneas deny de CORPORATIVA-IN y WAN-IN tras P4 y P6
+!     Captura: Figura E7
+!
+! Opcional  Seguridad de puerto en la VLAN de cámaras
+!     SW-CAM-PL:        show port-security interface GigabitEthernet1/4
+!
+! Al terminar: Archivo > Guardar en Packet Tracer y adjunte el .pkt guardado.
+! Nota: Server-PT no ofrece servicio SSH, por lo que la regla salto -> borde
+! (puerto 22) se verifica con "show access-lists DMZ-IN", no con una sesión real.
